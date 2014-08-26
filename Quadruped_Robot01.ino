@@ -1,28 +1,34 @@
 #include <Servo.h>
 
+// All pin definitions
 
 const int PIN_LED_GREEN = 3;
 const int PIN_LED_RED = 4;
+const int PIN_BACKSERVO = 9;
+const int PIN_FRONTSERVO = 10;
 const int PIN_ECHO = 11;
 const int PIN_PING = 12;
+
 const int PIN_STARTBUTTONSTATE = 13;
 const int MIN_DISTANCE = 15;           // minimum distance in cm before switching to BACKWARDSs
 const int MAX_DISTANCE = 200;          // maximum distance in cm known to the system
+
+const int ANGLE_NEUTRAL = 80;
+const int FWD_ANGLE1 = 55;
+const int FWD_ANGLE2 = 105;
+const int SIDE_ANGLE1 = 40;
+const int SIDE_ANGLE2 = 120;
+
 const bool DEBUG = false;              // enable some printing
+
 int BUTTONSTATE;
 int ISMOVING = false;
-int STEPS_DELAY =120;                  // delay between steps in ms
+int STEPS_DELAY = 120;                  // delay between steps in ms
 int DISTANCE_CONSTRAINT;
 long DISTANCE;
 
+Servo FRONTSERVO,BACKSERVO;             // our servo objects
 
-Servo FRONTSERVO,BACKSERVO;
-
-int ANGLE_NEUTRAL = 80;
-int FWD_ANGLE1 = 55;
-int FWD_ANGLE2 = 105;
-int SIDE_ANGLE1 = 40;
-int SIDE_ANGLE2 = 120;
 
 // Our walk sequences
 int FORWARDS[] = {FWD_ANGLE1,FWD_ANGLE2,FWD_ANGLE2,FWD_ANGLE2,FWD_ANGLE2,FWD_ANGLE1,FWD_ANGLE1,FWD_ANGLE1};
@@ -37,8 +43,8 @@ void setup()
   pinMode(PIN_ECHO, INPUT);
   pinMode(PIN_LED_RED, OUTPUT);
   pinMode(PIN_LED_GREEN, OUTPUT);
-  FRONTSERVO.attach(10);
-  BACKSERVO.attach(9);
+  FRONTSERVO.attach(PIN_FRONTSERVO);
+  BACKSERVO.attach(PIN_BACKSERVO);
 }
   
 void loop()
