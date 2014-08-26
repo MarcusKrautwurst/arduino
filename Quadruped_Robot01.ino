@@ -1,68 +1,73 @@
 #include <Servo.h>
 
 
-const int greenLedPin = 3;
-const int redLedPin = 4;
-const int echoPin = 11;
-const int pingPin = 12;
-const int buttonPin = 13;
-const int minDistance = 15; // minimum distance in cm before switching to backwards
-int button;
-int startedMoving = false;
-int mydelay=120;
-long distance;
-int cstr_dist;
+const int PIN_LED_GREEN = 3;
+const int PIN_LED_RED = 4;
+const int PIN_ECHO = 11;
+const int PIN_PING = 12;
+const int PIN_STARTBUTTONSTATE = 13;
+const int MINDISTANCE = 15; // minimum distance in cm before switching to BACKWARDSs
+const int MAXDISTANCE = 200; // maximum distance in cm known to the system
+const bool DEBUG = false ;
+int BUTTONSTATE;
+int ISMOVING = false;
+int STEPS_DELAY =120;
+int DISTANCE_CONSTRAINT;
+long DISTANCE;
 
-Servo frontservo,backservo;
 
-int neutralAngle = 80;
-int a1 = 55;
-int a2 = 105;
+Servo FRONTSERVO,BACKSERVO;
 
-int forward[] = {a1,a2,a2,a2,a2,a1,a1,a1};
-int backward[] = {a1,a1,a1,a2,a2,a2,a2,a1};
-int left[] = {a1,a2};
+int ANGLE_NEUTRAL = 80;
+int FWD_ANGLE1 = 55;
+int FWD_ANGLE2 = 105;
+int SIDE_ANGLE1 = 40;
+int SIDE_ANGLE2 = 120;
 
+// Our walk sequences
+int FORWARDS[] = {FWD_ANGLE1,FWD_ANGLE2,FWD_ANGLE2,FWD_ANGLE2,FWD_ANGLE2,FWD_ANGLE1,FWD_ANGLE1,FWD_ANGLE1};
+int BACKWARDS[] = {FWD_ANGLE1,FWD_ANGLE1,FWD_ANGLE1,FWD_ANGLE2,FWD_ANGLE2,FWD_ANGLE2,FWD_ANGLE2,FWD_ANGLE1};
+int SIDEWAYS[] = {SIDE_ANGLE1,SIDE_ANGLE2,SIDE_ANGLE2,SIDE_ANGLE2,SIDE_ANGLE2,SIDE_ANGLE1,SIDE_ANGLE1,SIDE_ANGLE1};
 
 void setup()
 {
   Serial.begin(115200);
-  pinMode(buttonPin,INPUT);
-  pinMode(pingPin,OUTPUT);
-  pinMode(echoPin, INPUT);
-  pinMode(redLedPin, OUTPUT);
-  pinMode(greenLedPin, OUTPUT);
-  frontservo.attach(10);
-  backservo.attach(9);
+  pinMode(PIN_STARTBUTTONSTATE,INPUT);
+  pinMode(PIN_PING,OUTPUT);
+  pinMode(PIN_ECHO, INPUT);
+  pinMode(PIN_LED_RED, OUTPUT);
+  pinMode(PIN_LED_GREEN, OUTPUT);
+  FRONTSERVO.attach(10);
+  BACKSERVO.attach(9);
 }
   
 void loop()
 { 
-  button=digitalRead(buttonPin); // pushbutton
-  if (button == HIGH || startedMoving==true)
+  BUTTONSTATE=digitalRead(PIN_STARTBUTTONSTATE);
+  if (BUTTONSTATE == HIGH || STARTEDMOVING==true)
   {  
-    startedMoving = true;
+    STARTEDMOVING = true;
     
-    distance = getdistance();
-    cstr_dist = constrain(distance, 200, minDistance);
-    mydelay = map(cstr_dist, 200,minDistance,400,120); // this is our speed mofifier based on distance
+    DISTANCE = getdistance();
+    DISTANCE_CONSTRAINT = constrain(DISTANCE, MAXDISTANCE, MINDISTANCE);
+    STEPS_DELAY  = map(DISTANCE_CONSTRAINT, MAXDISTANCE,MINDISTANCE,400,120); // this is our speed mofifier based on DISTANCE
       
-    if (distance >= minDistance) // if we are 10 cm close to something, start walking backwards
+    if (DISTANCE >= MINDISTANCE) // if we are 10 cm close to something, start walking BACKWARDSs
     {
-      digitalWrite(greenLedPin, HIGH);
-      digitalWrite(redLedPin, LOW);
-      walkfwd();
+      digitalWrite(PIN_LED_GREEN, HIGH);
+      digitalWrite(PIN_LED_RED, LOW);
+      walk_fwd();
     } 
     else 
     {
-      digitalWrite(greenLedPin, LOW);
-      digitalWrite(redLedPin, HIGH);
-      turnleft(); 
+      digitalWrite(PIN_LED_GREEN, LOW);
+      digitalWrite(PIN_LED_RED, HIGH);
+      walk_left(); 
     }
   }
   else 
   {
-    startedMoving = false;
+    STARTEDMOVING = false;
   }    
 } 
 
@@ -70,92 +75,87 @@ long getdistance()
 {
   long duration, cm;
   
-  // The pinging
-  digitalWrite(pingPin, LOW);
+  // Here we send a ping and measure the time until it bounces back
+  digitalWrite(PIN_PING, LOW);
   delayMicroseconds(2);
-  digitalWrite(pingPin, HIGH);
+  digitalWrite(PIN_PING, HIGH);
   delayMicroseconds(5);
-  digitalWrite(pingPin, LOW);
+  digitalWrite(PIN_PING, LOW);
   
-  duration = pulseIn(echoPin, HIGH);
+  duration = pulseIn(PIN_ECHO, HIGH);
   cm = microsecondsToCentimeters(duration);
-//  Serial.println();
-//  Serial.print(cm);
-//  Serial.print(" cm\t");  
-  return cm;
+
+  if (DEBUG==true)
+  {
+    Serial.println();
+    Serial.print(cm);
+    Serial.print(" cm\t");  
+    return cm;
+  }
 }
 
 long microsecondsToCentimeters(long microseconds)
 {
   // The speed of sound is 340 m/s or 29 microseconds per centimeter.
-  // The ping travels out and back, so to find the distance of the
-  // object we take half of the distance travelled.
+  // The ping travels out and back, so to find the DISTANCE of the
+  // object we take half of the DISTANCE travelled.
   return microseconds / 29 / 2;
 }
 
 
 void resetservo(Servo& myservo)
 {
-  myservo.write(neutralAngle);  
+  myservo.write(ANGLE_NEUTRAL);  
 }
 
 
-void walkfwd() 
+void walk_fwd() 
 {
-  int a1 = 55;
-  int a2 = 105;
-  
   for(int n=0;n<4;n++)
   {
-    frontservo.write(forward[2*n]);
-    backservo.write(forward[(2*n)+1]);
-    delay(mydelay); 
-    Serial.println(mydelay);
+    FRONTSERVO.write(FORWARDS[2*n]);
+    BACKSERVO.write(FORWARDS[(2*n)+1]);
+    delay(STEPS_DELAY ); 
+    Serial.println(STEPS_DELAY );
   }
 }
 
-void walkbwd() 
+void walk_bck() 
 {
-  int a1 = 55;
-  int a2 = 105;
-  
   for(int n=0;n<4;n++)
   {
-    frontservo.write(backward[2*n]);
-    backservo.write(backward[(2*n)+1]);
-    delay(mydelay); 
-    Serial.println(mydelay);
+    FRONTSERVO.write(BACKWARDS[2*n]);
+    BACKSERVO.write(BACKWARDS[(2*n)+1]);
+    delay(STEPS_DELAY ); 
+    Serial.println(STEPS_DELAY );
   }
 }
 
-void turnleft() 
-{
-  int a1 = 40;
-  int a2 = 120;
-  
+void walk_left() 
+{ 
   for(int n=0;n<4;n++)
   {
-    frontservo.write(forward[2*n]);
-    backservo.write(forward[(2*n)+1]);
-    delay(mydelay); 
-    Serial.println(mydelay);
+    FRONTSERVO.write(SIDEWAYS[2*n]);
+    BACKSERVO.write(SIDEWAYS[(2*n)+1]);
+    delay(STEPS_DELAY ); 
+    Serial.println(STEPS_DELAY );
   }
 }
 
-void turnright() 
+void walk_right() 
 {
-  int a1 = 40;
-  int a2 = 120;
-  frontservo.write(a2);
+  FRONTSERVO.write(SIDEWAYS[2*n]);
+  BACKSERVO.write(SIDEWAYS[(2*n)+1]);
+
   for(int n=0;n<4;n++)
   {
-    backservo.write(forward[(2*n)+1]);
+    BACKSERVO.write(FORWARDS[(2*n)+1]);
   }
 }
 
 
 void idle() 
 {
-  resetservo(frontservo);
-  resetservo(backservo);
+  resetservo(FRONTSERVO);
+  resetservo(BACKSERVO);
 }
