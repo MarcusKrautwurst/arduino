@@ -8,8 +8,8 @@ const int PIN_BACKSERVO = 9;
 const int PIN_FRONTSERVO = 10;
 const int PIN_ECHO = 11;
 const int PIN_PING = 12;
-
 const int PIN_STARTBUTTONSTATE = 13;
+
 const int MIN_DISTANCE = 15;           // minimum distance in cm before deciding to walk around obstacles
 const int MAX_DISTANCE = 200;          // maximum distance in cm known to the system
 
@@ -21,11 +21,13 @@ const int SIDE_ANGLE2 = 120;
 
 const bool DEBUG = false;              // enable some printing
 
-int BUTTONSTATE;
 int ISMOVING = false;
 int STEPS_DELAY = 120;                  // delay between steps in ms
+
+int BUTTONSTATE;
 int DISTANCE_CONSTRAINT;
 long DISTANCE;
+
 
 Servo FRONTSERVO,BACKSERVO;             // our servo objects
 
