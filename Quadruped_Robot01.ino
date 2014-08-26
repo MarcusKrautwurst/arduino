@@ -6,12 +6,12 @@ const int PIN_LED_RED = 4;
 const int PIN_ECHO = 11;
 const int PIN_PING = 12;
 const int PIN_STARTBUTTONSTATE = 13;
-const int MINDISTANCE = 15; // minimum distance in cm before switching to BACKWARDSs
-const int MAXDISTANCE = 200; // maximum distance in cm known to the system
-const bool DEBUG = false ;
+const int MIN_DISTANCE = 15;           // minimum distance in cm before switching to BACKWARDSs
+const int MAX_DISTANCE = 200;          // maximum distance in cm known to the system
+const bool DEBUG = false;              // enable some printing
 int BUTTONSTATE;
 int ISMOVING = false;
-int STEPS_DELAY =120;
+int STEPS_DELAY =120;                  // delay between steps in ms
 int DISTANCE_CONSTRAINT;
 long DISTANCE;
 
@@ -49,10 +49,10 @@ void loop()
     STARTEDMOVING = true;
     
     DISTANCE = getdistance();
-    DISTANCE_CONSTRAINT = constrain(DISTANCE, MAXDISTANCE, MINDISTANCE);
-    STEPS_DELAY  = map(DISTANCE_CONSTRAINT, MAXDISTANCE,MINDISTANCE,400,120); // this is our speed mofifier based on DISTANCE
+    DISTANCE_CONSTRAINT = constrain(DISTANCE, MAX_DISTANCE, MIN_DISTANCE);
+    STEPS_DELAY  = map(DISTANCE_CONSTRAINT, MAX_DISTANCE,MIN_DISTANCE,400,120); // this is our speed mofifier based on DISTANCE
       
-    if (DISTANCE >= MINDISTANCE) // if we are 10 cm close to something, start walking BACKWARDSs
+    if (DISTANCE >= MIN_DISTANCE) // if we are 10 cm close to something, start walking BACKWARDSs
     {
       digitalWrite(PIN_LED_GREEN, HIGH);
       digitalWrite(PIN_LED_RED, LOW);
