@@ -10,7 +10,7 @@ const int PIN_ECHO = 11;
 const int PIN_PING = 12;
 
 const int PIN_STARTBUTTONSTATE = 13;
-const int MIN_DISTANCE = 15;           // minimum distance in cm before switching to BACKWARDSs
+const int MIN_DISTANCE = 15;           // minimum distance in cm before deciding to walk around obstacles
 const int MAX_DISTANCE = 200;          // maximum distance in cm known to the system
 
 const int ANGLE_NEUTRAL = 80;
