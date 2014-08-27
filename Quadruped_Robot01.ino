@@ -10,7 +10,7 @@ const int PIN_ECHO = 11;
 const int PIN_PING = 12;
 const int PIN_STARTBUTTONSTATE = 13;
 
-const int MIN_DISTANCE = 15;           // minimum distance in cm before deciding to walk around obstacles
+const int MIN_DISTANCE = 20;           // minimum distance in cm before deciding to walk around obstacles
 const int MAX_DISTANCE = 200;          // maximum distance in cm known to the system
 
 const int ANGLE_NEUTRAL = 80;
@@ -19,7 +19,7 @@ const int FWD_ANGLE2 = 105;
 const int SIDE_ANGLE1 = 40;
 const int SIDE_ANGLE2 = 120;
 
-const bool DEBUG = false;              // enable some printing
+const bool DEBUG = true;              // enable some printing
 
 int ISMOVING = false;
 int STEPS_DELAY = 120;                  // delay between steps in ms
@@ -52,52 +52,73 @@ void setup()
 void loop()
 { 
   BUTTONSTATE=digitalRead(PIN_STARTBUTTONSTATE);
-  if (BUTTONSTATE == HIGH || STARTEDMOVING==true)
+  if (BUTTONSTATE == HIGH || ISMOVING==true)
   {  
-    STARTEDMOVING = true;
+    ISMOVING = true;
     
     DISTANCE = getdistance();
     DISTANCE_CONSTRAINT = constrain(DISTANCE, MAX_DISTANCE, MIN_DISTANCE);
     STEPS_DELAY  = map(DISTANCE_CONSTRAINT, MAX_DISTANCE,MIN_DISTANCE,400,120); // this is our speed mofifier based on DISTANCE
       
-    if (DISTANCE >= MIN_DISTANCE) // if we are 10 cm close to something, start walking BACKWARDSs
+    if (DISTANCE >= MIN_DISTANCE) 
     {
       digitalWrite(PIN_LED_GREEN, HIGH);
       digitalWrite(PIN_LED_RED, LOW);
-      walk_fwd();
+      //walk_fwd();
     } 
     else 
     {
       digitalWrite(PIN_LED_GREEN, LOW);
       digitalWrite(PIN_LED_RED, HIGH);
-      walk_left(); 
+      //walk_left(); 
     }
   }
   else 
   {
-    STARTEDMOVING = false;
+    ISMOVING = false;
   }    
 } 
 
 long getdistance() 
 {
-  long duration, cm;
+  long duration, duration2, cm, cm2;
   
   // Here we send a ping and measure the time until it bounces back
+//  digitalWrite(PIN_PING, LOW);
+//  delayMicroseconds(2);
+//  digitalWrite(PIN_PING, HIGH);
+//  delayMicroseconds(5);
+//  digitalWrite(PIN_PING, LOW);
+//  
+//  duration = pulseIn(PIN_ECHO, HIGH);
+  pinMode(PIN_PING, OUTPUT);
   digitalWrite(PIN_PING, LOW);
   delayMicroseconds(2);
   digitalWrite(PIN_PING, HIGH);
   delayMicroseconds(5);
   digitalWrite(PIN_PING, LOW);
   
+  pinMode(PIN_ECHO, INPUT);
   duration = pulseIn(PIN_ECHO, HIGH);
+  
+  pinMode(PIN_ECHO, OUTPUT);
+  digitalWrite(PIN_ECHO, LOW);
+  delayMicroseconds(2);
+  digitalWrite(PIN_ECHO, HIGH);
+  delayMicroseconds(5);
+  digitalWrite(PIN_ECHO, LOW);
+  
+  pinMode(PIN_PING, INPUT);
+  duration2 = pulseIn(PIN_PING, HIGH);
+  
   cm = microsecondsToCentimeters(duration);
-
+  cm2 = microsecondsToCentimeters(duration);
   if (DEBUG==true)
   {
     Serial.println();
     Serial.print(cm);
-    Serial.print(" cm\t");  
+    Serial.print(" cm and "); 
+    Serial.print(cm2);
     return cm;
   }
 }
@@ -152,12 +173,13 @@ void walk_left()
 
 void walk_right() 
 {
-  FRONTSERVO.write(SIDEWAYS[2*n]);
-  BACKSERVO.write(SIDEWAYS[(2*n)+1]);
 
   for(int n=0;n<4;n++)
   {
-    BACKSERVO.write(FORWARDS[(2*n)+1]);
+    FRONTSERVO.write(SIDEWAYS[(2*n)+1]);
+    BACKSERVO.write(SIDEWAYS[2*n]);
+    delay(STEPS_DELAY ); 
+    Serial.println(STEPS_DELAY );
   }
 }
 
