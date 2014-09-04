@@ -89,19 +89,15 @@ void loop()
       walk_fwd();
     }
   } 
-  
-  else 
-  {
-    isMoving = false;
-  }
 } 
 
 // -------------------- PING FUNCTIONS --------------------
 
-const char * get_next_direction()
+const char get_next_direction()
+{
   // This function will scan in an angle forward in both directions and will return us the longer distance
-  int leftside;
-  int rightside;
+  unsigned int leftside = 0;
+  unsigned int rightside = 0;
 
   servo_head.write(angle_default+a_headscan);
   delay(10);
@@ -118,17 +114,18 @@ const char * get_next_direction()
   if (leftside > rightside)
   {
     Serial.println("Suggesting left")
-    return "l"
+    return 'l'
   }
   else
   {
     Serial.println("Suggesting right")
-    return "r"
+    return 'r'
   }  
+}
   
 
 
-long getdistance() 
+int getdistance() 
 {
   // Get the distance to the next obstacle
   long duration,cm;
@@ -158,7 +155,7 @@ long microsecondsToCentimeters(long microseconds)
   // The speed of sound is 340 m/s or 29 microseconds per centimeter.
   // The ping travels out and back, so to find the DISTANCE of the
   // object we take half of the DISTANCE travelled.
-  return microseconds / 29 / 2;
+  return microseconds * 0.0689;
 }
 
 // -------------------- LOCOMOTION FUNCTIONS --------------------
