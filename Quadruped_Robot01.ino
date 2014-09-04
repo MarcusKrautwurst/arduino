@@ -1,68 +1,67 @@
 #include <Servo.h>
 
-// All pin definitions
-
-
-const int PIN_BACKSERVO = 9;
-const int PIN_FRONTSERVO = 10;
+const int PIN_servo_back = 9;
+const int PIN_servo_front = 10;
 const int PIN_ECHO = 11;
 const int PIN_PING = 12;
-const int PIN_STARTBUTTONSTATE = 13;
+const int PIN_STARTbuttonstate = 13;
 
+const int min_distance = 70;            // minimum distance in cm before deciding to walk around obstacles
+const int max_distance = 200;           // maximum distance in cm known to the system
+const int ping_intervall = 1500;        // The intervall when we send a ping to the ultrasonic sensor 
 
-const int MIN_DISTANCE = 70;              // minimum distance in cm before deciding to walk around obstacles
-const int MAX_DISTANCE = 200;          // maximum distance in cm known to the system
-const int PING_INTERVALL = 1500;
+const int angle_default = 80;           // Default angle
+const int a1_fwd = 55;                  // First angle for forward walking 
+const int a2_fwd = 105;                 // Second angle for forward walking 
+const int a1_side = 40;                 // First angle for sideways walking
+const int a2_side = 120;                // Second angle for sideways walking
 
-const int ANGLE_NEUTRAL = 80;
-const int FWD_ANGLE1 = 55;
-const int FWD_ANGLE2 = 105;
-const int SIDE_ANGLE1 = 40;
-const int SIDE_ANGLE2 = 120;
+const bool debug = true;                // enable some printing
 
-const bool DEBUG = true;                      // enable some printing
+int isMoving = false;
+int steps_delay = 120;                  // delay between steps in ms
 
-int ISMOVING = false;
-int STEPS_DELAY = 120;                       // delay between steps in ms
-
-int BUTTONSTATE;
-int DISTANCE_CONSTRAINT;
-long DISTANCE;
-long PREVIOUSDISTANCE=0;
-int CURRENT_ANGLE;
-
+int buttonstate;
+int distance_constraint;
+long distance;
+long previous_distance=0;
 
 unsigned long time;
-long oldtime = 0;
+long oldtime = 0;   
 
-Servo FRONTSERVO,BACKSERVO;       // our servo objects
+Servo servo_front,servo_back;           // our servo objects
 
 
-// Our walk sequences
-int FORWARDS[] = {FWD_ANGLE1,FWD_ANGLE2,FWD_ANGLE2,FWD_ANGLE2,FWD_ANGLE2,FWD_ANGLE1,FWD_ANGLE1,FWD_ANGLE1};
-int BACKWARDS[] = {FWD_ANGLE1,FWD_ANGLE1,FWD_ANGLE1,FWD_ANGLE2,FWD_ANGLE2,FWD_ANGLE2,FWD_ANGLE2,FWD_ANGLE1};
-int SIDEWAYS[] = {SIDE_ANGLE1,SIDE_ANGLE2,SIDE_ANGLE2,SIDE_ANGLE2,SIDE_ANGLE2,SIDE_ANGLE1,SIDE_ANGLE1,SIDE_ANGLE1};
+// Locomotion sequences
+
+int forward[] = {a1_fwd,a2_fwd,a2_fwd,a2_fwd,a2_fwd,a1_fwd,a1_fwd,a1_fwd};
+int backward[] = {a1_fwd,a1_fwd,a1_fwd,a2_fwd,a2_fwd,a2_fwd,a2_fwd,a1_fwd};
+int sideway[] = {a1_side,a2_side,a2_side,a2_side,a2_side,a1_side,a1_side,a1_side};
+
+
+// -------------------- INITALIZATION --------------------
 
 void setup()
 {
   Serial.begin(115200);
-  pinMode(PIN_STARTBUTTONSTATE,INPUT);
+  pinMode(PIN_STARTbuttonstate,INPUT);
   pinMode(PIN_PING,OUTPUT);
   pinMode(PIN_ECHO, INPUT);
-  FRONTSERVO.attach(PIN_FRONTSERVO);
-  BACKSERVO.attach(PIN_BACKSERVO);
-}
-  
+  servo_front.attach(PIN_servo_front);
+  servo_back.attach(PIN_servo_back);  
+
+// --------------------- MAIN LOOP ---------------------
+
 void loop()
 { 
-  BUTTONSTATE=digitalRead(PIN_STARTBUTTONSTATE);
-  if (BUTTONSTATE == HIGH || ISMOVING==true)
+  buttonstate=digitalRead(PIN_STARTbuttonstate);
+  if (buttonstate == HIGH || isMoving==true)
   {  
-    ISMOVING = true;    
+    isMoving = true;    
     
-    DISTANCE = getdistance();
+    distance = getdistance();
     
-    if (DISTANCE >= MIN_DISTANCE) 
+    if (distance >= min_distance) 
     {
       walk_fwd();
     } 
@@ -74,9 +73,11 @@ void loop()
   
   else 
   {
-    ISMOVING = false;
+    isMoving = false;
   }
 } 
+
+// -------------------- PING FUNCTIONS --------------------
 
 long getdistance() 
 {
@@ -93,12 +94,13 @@ long getdistance()
   
   cm = microsecondsToCentimeters(duration);
 
-  if (DEBUG==true)
+  if (debug==true)
   {
     Serial.print("Distance: ");
     Serial.print(cm);
     Serial.print(" cm\n"); 
   }
+
   return cm;
 }
 
@@ -110,10 +112,11 @@ long microsecondsToCentimeters(long microseconds)
   return microseconds / 29 / 2;
 }
 
+// -------------------- LOCOMOTION FUNCTIONS --------------------
 
 void resetservo(Servo& myservo)
 {
-  myservo.write(ANGLE_NEUTRAL);  
+  myservo.write(angle_neutral);  
 }
 
 
@@ -121,10 +124,9 @@ void walk_fwd()
 {
   for(int n=0;n<4;n++)
   {
-    FRONTSERVO.write(FORWARDS[2*n]);
-    BACKSERVO.write(FORWARDS[(2*n)+1]);
-    delay(STEPS_DELAY ); 
-    Serial.println(STEPS_DELAY );
+    servo_front.write(forward[2*n]);
+    servo_back.write(forward[(2*n)+1]);
+    delay(steps_delay); 
   }
 }
 
@@ -132,10 +134,9 @@ void walk_bck()
 {
   for(int n=0;n<4;n++)
   {
-    FRONTSERVO.write(BACKWARDS[2*n]);
-    BACKSERVO.write(BACKWARDS[(2*n)+1]);
-    delay(STEPS_DELAY ); 
-    Serial.println(STEPS_DELAY );
+    servo_front.write(backward[2*n]);
+    servo_back.write(backward[(2*n)+1]);
+    delay(steps_delay); 
   }
 }
 
@@ -143,10 +144,9 @@ void walk_left()
 { 
   for(int n=0;n<4;n++)
   {
-    FRONTSERVO.write(SIDEWAYS[2*n]);
-    BACKSERVO.write(SIDEWAYS[(2*n)+1]);
-    delay(STEPS_DELAY ); 
-    Serial.println(STEPS_DELAY );
+    servo_front.write(sideway[2*n]);
+    servo_back.write(sideway[(2*n)+1]);
+    delay(steps_delay); 
   }
 }
 
@@ -155,16 +155,15 @@ void walk_right()
 
   for(int n=0;n<4;n++)
   {
-    FRONTSERVO.write(SIDEWAYS[(2*n)+1]);
-    BACKSERVO.write(SIDEWAYS[2*n]);
-    delay(STEPS_DELAY ); 
-    Serial.println(STEPS_DELAY );
+    servo_front.write(sideway[(2*n)+1]);
+    servo_back.write(sideway[2*n]);
+    delay(steps_delay); 
   }
 }
 
 
 void idle() 
 {
-  resetservo(FRONTSERVO);
-  resetservo(BACKSERVO);
+  resetservo(servo_front);
+  resetservo(servo_back);
 }
